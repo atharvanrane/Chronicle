@@ -100,7 +100,7 @@ export const StudioDashboard: React.FC<StudioDashboardProps> = ({
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 dark:bg-white dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-all shadow-sm active:scale-95"
           >
             <PenSquare className="w-3.5 h-3.5" />
-            <span>New Story</span>
+            <span>New Blog</span>
           </button>
         </div>
       </div>
@@ -186,7 +186,7 @@ export const StudioDashboard: React.FC<StudioDashboardProps> = ({
           <table className="w-full text-left text-xs">
             <thead className="bg-neutral-50 dark:bg-neutral-850/50 border-b border-neutral-200 dark:border-neutral-800 text-neutral-500 font-mono uppercase tracking-wider">
               <tr>
-                <th className="py-3.5 px-6 font-medium">Story Title</th>
+                <th className="py-3.5 px-6 font-medium">Blog Title</th>
                 <th className="py-3.5 px-4 font-medium">Category</th>
                 <th className="py-3.5 px-4 font-medium">Status</th>
                 <th className="py-3.5 px-4 font-medium text-right">Metrics</th>
@@ -267,7 +267,7 @@ export const StudioDashboard: React.FC<StudioDashboardProps> = ({
                         <button
                           onClick={() => onSelectPost(post)}
                           className="p-1.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                          title="Preview Story"
+                          title="Preview Blog"
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
@@ -275,7 +275,7 @@ export const StudioDashboard: React.FC<StudioDashboardProps> = ({
                         <button
                           onClick={() => onEditPost(post)}
                           className="p-1.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                          title="Edit Story & SEO"
+                          title="Edit Blog & SEO"
                         >
                           <PenSquare className="w-3.5 h-3.5" />
                         </button>
@@ -283,7 +283,7 @@ export const StudioDashboard: React.FC<StudioDashboardProps> = ({
                         <button
                           onClick={() => onDuplicatePost(post)}
                           className="p-1.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                          title="Duplicate Story"
+                          title="Duplicate Blog"
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
@@ -291,7 +291,7 @@ export const StudioDashboard: React.FC<StudioDashboardProps> = ({
                         <button
                           onClick={() => onDeletePost(post.id)}
                           className="p-1.5 text-neutral-400 hover:text-rose-600 rounded hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                          title="Delete Story"
+                          title="Delete Blog"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

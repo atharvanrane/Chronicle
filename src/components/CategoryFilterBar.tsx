@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, LayoutGrid, List, SlidersHorizontal, Compass, UserCheck } from 'lucide-react';
+import { Search, LayoutGrid, List, SlidersHorizontal, Compass, UserCheck, Square } from 'lucide-react';
 
 interface CategoryFilterBarProps {
   categories: string[];
@@ -9,8 +9,8 @@ interface CategoryFilterBarProps {
   onSearchChange: (query: string) => void;
   sortBy: 'newest' | 'popular' | 'reading-time';
   onSortChange: (sort: 'newest' | 'popular' | 'reading-time') => void;
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
+  viewMode: 'feed' | 'grid' | 'list';
+  onViewModeChange: (mode: 'feed' | 'grid' | 'list') => void;
   feedType: 'for-you' | 'following';
   onFeedTypeChange: (feed: 'for-you' | 'following') => void;
   followingCount: number;
@@ -60,31 +60,46 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
           </button>
         </div>
 
-        {/* View Mode switcher (Grid vs List) */}
+        {/* View Mode switcher (Instagram Feed vs Explore Grid vs Minimal List) */}
         <div className="hidden sm:flex items-center gap-1 p-1 bg-neutral-100 dark:bg-neutral-900 rounded-xl shrink-0">
           <button
-            onClick={() => onViewModeChange('grid')}
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'grid'
-                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs'
+            onClick={() => onViewModeChange('feed')}
+            className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 ${
+              viewMode === 'feed'
+                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs font-semibold'
                 : 'text-neutral-500 hover:text-neutral-800 dark:text-neutral-400'
             }`}
             title="Instagram Feed Cards"
+            aria-label="Feed layout"
+          >
+            <Square className="w-3.5 h-3.5" />
+            <span className="text-[11px] pr-0.5">Feed</span>
+          </button>
+          <button
+            onClick={() => onViewModeChange('grid')}
+            className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 ${
+              viewMode === 'grid'
+                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs font-semibold'
+                : 'text-neutral-500 hover:text-neutral-800 dark:text-neutral-400'
+            }`}
+            title="Explore 3-Column Grid"
             aria-label="Grid layout"
           >
             <LayoutGrid className="w-3.5 h-3.5" />
+            <span className="text-[11px] pr-0.5">Explore</span>
           </button>
           <button
             onClick={() => onViewModeChange('list')}
-            className={`p-1.5 rounded-lg transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 ${
               viewMode === 'list'
-                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs'
+                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs font-semibold'
                 : 'text-neutral-500 hover:text-neutral-800 dark:text-neutral-400'
             }`}
             title="Editorial List View"
             aria-label="List layout"
           >
             <List className="w-3.5 h-3.5" />
+            <span className="text-[11px] pr-0.5">List</span>
           </button>
         </div>
       </div>

@@ -13,6 +13,7 @@ import {
 import { Post, UserProfile } from '../types/blog';
 import { CoverArtwork } from './CoverArtwork';
 import { useAuth } from '../context/AuthContext';
+import { KeyRound, Lock, Check, Shield } from 'lucide-react';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -31,8 +32,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   savedPosts,
   onSelectPost,
 }) => {
-  const { currentUser, followedUsers, toggleFollow } = useAuth();
-  const [profileTab, setProfileTab] = useState<'grid' | 'saved' | 'liked'>('grid');
+  const { currentUser, followedUsers, toggleFollow, changeAccountPassword, resetUserPassword } = useAuth();
+  const [profileTab, setProfileTab] = useState<'grid' | 'saved' | 'liked' | 'security'>('grid');
+
+  // Password reset state for this account
+  const [currentPasswordInput, setCurrentPasswordInput] = useState('');
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [passwordStatusMsg, setPasswordStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isSubmittingPass, setIsSubmittingPass] = useState(false);
 
   if (!isOpen) return null;
 
@@ -182,6 +190,20 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <Heart className="w-3.5 h-3.5" />
               <span>Liked</span>
             </button>
+
+            {isOwnProfile && (
+              <button
+                onClick={() => setProfileTab('security')}
+                className={`flex items-center gap-1.5 py-2 uppercase tracking-wider transition-colors ${
+                  profileTab === 'security'
+                    ? 'text-neutral-900 dark:text-white font-bold border-t-2 border-neutral-900 dark:border-white -mt-[17px]'
+                    : 'text-neutral-400 hover:text-neutral-700'
+                }`}
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Security</span>
+              </button>
+            )}
           </div>
 
           {/* Tab Content: 3-column Instagram Grid */}
@@ -291,6 +313,118 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   No liked posts yet.
                 </div>
               )}
+            </div>
+          )}
+
+          {profileTab === 'security' && (
+            <div className="max-w-md mx-auto space-y-6 py-2 animate-in fade-in">
+              <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-700/80 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                  <Shield className="w-4 h-4 text-emerald-600" />
+                  <span>Account Security & Password</span>
+                </div>
+                <p className="text-[11px] text-neutral-500 leading-relaxed">
+                  You can change or reset your password at any time. If you ever forget your password, you can reset it via the Sign In screen or contact an Administrator for immediate account recovery.
+                </p>
+                <div className="pt-1 flex items-center justify-between text-[11px] font-mono text-neutral-400">
+                  <span>Email: {user.email}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active & Protected</span>
+                </div>
+              </div>
+
+              {passwordStatusMsg && (
+                <div
+                  className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                    passwordStatusMsg.type === 'success'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                  }`}
+                >
+                  {passwordStatusMsg.type === 'success' ? (
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <Lock className="w-4 h-4 text-rose-600 shrink-0" />
+                  )}
+                  <span>{passwordStatusMsg.text}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setPasswordStatusMsg(null);
+                  if (newPasswordInput.length < 6) {
+                    setPasswordStatusMsg({ type: 'error', text: 'New password must be at least 6 characters long.' });
+                    return;
+                  }
+                  if (newPasswordInput !== confirmPasswordInput) {
+                    setPasswordStatusMsg({ type: 'error', text: 'New passwords do not match. Please re-enter.' });
+                    return;
+                  }
+                  setIsSubmittingPass(true);
+                  try {
+                    const res = await changeAccountPassword(currentPasswordInput, newPasswordInput);
+                    setPasswordStatusMsg({ type: 'success', text: res.message });
+                    setCurrentPasswordInput('');
+                    setNewPasswordInput('');
+                    setConfirmPasswordInput('');
+                  } catch (err: any) {
+                    setPasswordStatusMsg({ type: 'error', text: err.message || 'Failed to update password.' });
+                  } finally {
+                    setIsSubmittingPass(false);
+                  }
+                }}
+                className="space-y-3.5 text-xs"
+              >
+                <div className="space-y-1">
+                  <label className="font-semibold text-neutral-700 dark:text-neutral-300">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Enter existing password"
+                    value={currentPasswordInput}
+                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-neutral-700 dark:text-neutral-300">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Minimum 6 characters"
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-neutral-700 dark:text-neutral-300">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Retype new password"
+                    value={confirmPasswordInput}
+                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingPass}
+                  className="w-full py-2.5 px-4 rounded-xl font-semibold text-white bg-neutral-900 dark:bg-white dark:text-neutral-900 hover:bg-neutral-800 transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {isSubmittingPass ? 'Saving...' : 'Update Account Password'}
+                </button>
+              </form>
             </div>
           )}
         </div>

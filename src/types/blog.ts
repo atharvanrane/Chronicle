@@ -13,6 +13,7 @@ export interface UserProfile {
   isBanned?: boolean;
   banReason?: string;
   strikeCount?: number;
+  passwordUpdatedAt?: string;
 }
 
 export interface CommentItem {

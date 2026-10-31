@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck } from 'lucide-react';
+import { UserCheck, Sparkles, TrendingUp, Check, UserPlus, ShieldCheck, PenSquare, ArrowRight } from 'lucide-react';
 import { Post, CommentItem, StoryItem, UserProfile } from './types/blog';
 import { INITIAL_POSTS } from './data/initialPosts';
 import { INITIAL_STORIES } from './data/stories';
@@ -27,16 +27,26 @@ function MainApp() {
     isAdmin,
     unreadNotificationsCount,
     followedUsers,
+    toggleFollow,
+    allUsers,
+    logout,
   } = useAuth();
 
-  // 1. Posts state (persisted to localStorage) - purge legacy mock posts (post-1 .. post-6)
+  // 1. Posts state (persisted to localStorage; filters out any legacy dummy posts)
   const [posts, setPosts] = useState<Post[]>(() => {
     try {
       const stored = localStorage.getItem('chronicle_posts_v3');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          return parsed.filter((p) => !['post-1', 'post-2', 'post-3', 'post-4', 'post-5', 'post-6'].includes(p.id));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const dummyIds = [
+            'post-1', 'post-2', 'post-3', 'post-4', 'post-5', 'post-6',
+            'essay-architecture-of-solitude', 'essay-geometry-of-silence', 'essay-dialectic-of-llms'
+          ];
+          const cleaned = parsed.filter(
+            (p) => !dummyIds.includes(p.id) && !p.author?.email?.endsWith('@chronicle.local')
+          );
+          if (cleaned.length > 0) return cleaned;
         }
       }
     } catch (e) {
@@ -53,8 +63,8 @@ function MainApp() {
     }
   }, [posts]);
 
-  // 2. Stories state
-  const [stories, setStories] = useState<StoryItem[]>(INITIAL_STORIES);
+  // 2. Instants state (Clean: starts empty, users share real Instants)
+  const [stories, setStories] = useState<StoryItem[]>([]);
 
   // 3. User likes tracking (Instagram style, starts empty)
   const [userLikedPostIds, setUserLikedPostIds] = useState<string[]>(() => {
@@ -127,13 +137,13 @@ function MainApp() {
 
   // 9. Homepage Filter, Search, & Feed Stream
   const [feedType, setFeedType] = useState<'for-you' | 'following'>('for-you');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All Stories');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All Blogs');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'reading-time'>('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'feed' | 'grid' | 'list'>('feed');
 
   const categoriesList = [
-    'All Stories',
+    'All Blogs',
     'Engineering',
     'Design',
     'Artificial Intelligence',
@@ -340,7 +350,7 @@ function MainApp() {
 
   const filteredCatalogPosts = posts.filter((p) => {
     const isPublic = p.status === 'published';
-    const matchesCat = selectedCategory === 'All Stories' || p.category === selectedCategory;
+    const matchesCat = selectedCategory === 'All Blogs' || p.category === selectedCategory;
     const matchesSearch =
       !searchQuery ||
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -410,10 +420,11 @@ function MainApp() {
                 const target = posts.find((p) => p.id === pid);
                 if (target) handleOpenPost(target);
               }}
+              onAddStory={(newStory) => setStories((prev) => [newStory, ...prev])}
             />
 
-            {/* Split Screen Hero Featured Article */}
-            {featuredPost && (
+            {/* Split Screen Hero Featured Article (Showcase on Explore Grid & List views) */}
+            {viewMode !== 'feed' && featuredPost && (
               <HeroFeatured
                 post={featuredPost}
                 onRead={handleOpenPost}
@@ -438,15 +449,264 @@ function MainApp() {
               followingCount={followedUsers.length}
             />
 
-            {/* Articles Grid or List */}
-            {sortedCatalogPosts.length > 0 ? (
-              <div
-                className={
-                  viewMode === 'grid'
-                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'
-                    : 'divide-y divide-neutral-200 dark:divide-neutral-800'
-                }
-              >
+            {/* VIEW MODE 1: INSTAGRAM FEED STREAM (Single Column + Desktop Sidebar) */}
+            {viewMode === 'feed' ? (
+              <div className="flex items-start justify-center gap-10">
+                {/* Central Stream Container */}
+                <div className="w-full max-w-xl space-y-6">
+                  {sortedCatalogPosts.length > 0 ? (
+                    sortedCatalogPosts.map((post) => (
+                      <ArticleCard
+                        key={post.id}
+                        post={post}
+                        onSelect={handleOpenPost}
+                        isBookmarked={savedPostIds.includes(post.id)}
+                        onToggleBookmark={handleToggleBookmark}
+                        isLiked={userLikedPostIds.includes(post.id)}
+                        onToggleLike={handleToggleLike}
+                        onAuthorClick={handleAuthorClick}
+                        onAddComment={handleAddComment}
+                        onOpenAiSummary={(p) => {
+                          setAiChatContextPost(p);
+                          setIsAiChatOpen(true);
+                        }}
+                        onReportPost={(p) =>
+                          setReportModalData({
+                            isOpen: true,
+                            targetType: 'post',
+                            targetId: p.id,
+                            targetTitleOrName: p.title,
+                            targetAuthorHandle: p.author.username,
+                          })
+                        }
+                        viewMode="feed"
+                      />
+                    ))
+                  ) : feedType === 'following' ? (
+                    <div className="p-10 rounded-3xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-center space-y-4 shadow-xs">
+                      <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-850 text-neutral-400 flex items-center justify-center mx-auto">
+                        <UserCheck className="w-5 h-5 text-neutral-500" />
+                      </div>
+                      <p className="font-editorial text-xl font-bold text-neutral-800 dark:text-neutral-200">
+                        No blogs from followed authors yet
+                      </p>
+                      <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
+                        Follow inspiring writers in the community or explore the "For You" stream to discover fresh posts.
+                      </p>
+                      <button
+                        onClick={() => setFeedType('for-you')}
+                        className="px-4 py-2 text-xs font-semibold rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
+                      >
+                        Explore For You
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-10 rounded-3xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-center space-y-4 shadow-xs">
+                      <p className="font-editorial text-xl font-bold text-neutral-800 dark:text-neutral-200">
+                        {posts.length === 0 ? 'No blogs published yet' : 'No matching blogs found'}
+                      </p>
+                      <p className="text-xs text-neutral-500 max-w-xs mx-auto">
+                        {posts.length === 0
+                          ? 'Welcome to Chronicle! Publish the first longform blog post or share an Instant.'
+                          : 'Try adjusting your search query or pick another category.'}
+                      </p>
+                      {posts.length === 0 ? (
+                        <button
+                          onClick={() => {
+                            if (currentUser) {
+                              setCurrentView('editor');
+                              setEditingPost(null);
+                            } else {
+                              setIsAuthModalOpen(true);
+                            }
+                          }}
+                          className="px-5 py-2.5 text-xs font-semibold rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
+                        >
+                          {currentUser ? 'Write First Blog' : 'Sign In to Publish'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSelectedCategory('All Blogs');
+                            setSearchQuery('');
+                          }}
+                          className="px-4 py-2 text-xs font-semibold rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100"
+                        >
+                          Clear Filters
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Sticky Sidebar (Instagram Desktop Web Style) */}
+                <aside className="hidden lg:block w-80 shrink-0 sticky top-24 space-y-6 pl-4 select-none">
+                  {/* Current User Quick Profile Row */}
+                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 shadow-xs">
+                    <div
+                      onClick={() => currentUser ? setProfileModalUser(currentUser) : setIsAuthModalOpen(true)}
+                      className="flex items-center gap-3 cursor-pointer group"
+                    >
+                      <div className="p-0.5 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] shrink-0">
+                        <div className="p-0.5 bg-white dark:bg-neutral-900 rounded-full">
+                          <img
+                            src={currentUser?.photoURL || 'https://api.dicebear.com/7.x/identicon/svg?seed=guest'}
+                            alt={currentUser?.displayName || 'Guest'}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate group-hover:underline">
+                          {currentUser?.displayName || 'Guest Member'}
+                        </h4>
+                        <span className="text-[11px] font-mono text-neutral-400 block truncate">
+                          @{currentUser?.username || 'explore'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => currentUser ? logout() : setIsAuthModalOpen(true)}
+                      className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0"
+                    >
+                      {currentUser ? 'Switch' : 'Sign In'}
+                    </button>
+                  </div>
+
+                  {/* "Suggested for you" Module */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-neutral-500 dark:text-neutral-400">
+                        Suggested for you
+                      </span>
+                      <button
+                        onClick={() => setFeedType('for-you')}
+                        className="text-[11px] font-semibold text-neutral-800 dark:text-neutral-200 hover:underline"
+                      >
+                        See All
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {(() => {
+                        const suggestedCreators = allUsers.filter(
+                          (u) =>
+                            u.id !== currentUser?.id &&
+                            u.email.toLowerCase() !== currentUser?.email?.toLowerCase() &&
+                            !u.email.endsWith('@chronicle.local') &&
+                            !u.id.includes('elena') &&
+                            !u.id.includes('marcus') &&
+                            !u.id.includes('sarah')
+                        );
+
+                        if (suggestedCreators.length === 0) {
+                          return (
+                            <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-850/60 border border-dashed border-neutral-200 dark:border-neutral-800 text-center space-y-1">
+                              <p className="text-[11px] font-semibold text-neutral-700 dark:text-neutral-300">
+                                No other members yet
+                              </p>
+                              <p className="text-[10px] text-neutral-400 leading-relaxed">
+                                Real accounts registered on the platform will appear here for you to follow.
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        return suggestedCreators.map((creator) => {
+                          const isFollowing = followedUsers.includes(creator.username);
+                          return (
+                            <div
+                              key={creator.id}
+                              className="flex items-center justify-between gap-3 text-xs"
+                            >
+                              <div
+                                onClick={() => handleAuthorClick({ author: creator } as any, { stopPropagation: () => {} } as any)}
+                                className="flex items-center gap-2.5 cursor-pointer group min-w-0"
+                              >
+                                <img
+                                  src={creator.photoURL}
+                                  alt={creator.displayName}
+                                  className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 shrink-0"
+                                />
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1">
+                                    <h5 className="font-semibold text-neutral-900 dark:text-neutral-100 truncate group-hover:underline text-[11px]">
+                                      {creator.displayName}
+                                    </h5>
+                                    {creator.role === 'admin' ? (
+                                      <ShieldCheck className="w-3 h-3 text-amber-500 fill-amber-500/20 shrink-0" />
+                                    ) : (
+                                      <ShieldCheck className="w-3 h-3 text-blue-500 fill-blue-500/20 shrink-0" />
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] text-neutral-400 block truncate">
+                                    {creator.bio || `@${creator.username}`}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => toggleFollow(creator)}
+                                className={`text-[11px] font-semibold transition-colors shrink-0 ${
+                                  isFollowing
+                                    ? 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200'
+                                    : 'text-blue-600 dark:text-blue-400 hover:text-blue-700'
+                                }`}
+                              >
+                                {isFollowing ? 'Following' : 'Follow'}
+                              </button>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Trending Tags */}
+                  <div className="space-y-2 pt-2 border-t border-neutral-100 dark:border-neutral-850">
+                    <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 block">
+                      Trending Editorial Topics
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 text-[11px] font-mono">
+                      {['#Architecture', '#Typography', '#DeepWork', '#AIPhilosophy', '#Minimalism'].map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => setSearchQuery(tag.replace('#', ''))}
+                          className="px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-850 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Instagram-style institutional footer */}
+                  <div className="pt-2 text-[10px] text-neutral-400 dark:text-neutral-500 space-y-1.5 leading-relaxed font-sans">
+                    <p className="space-x-1">
+                      <span>About</span>
+                      <span>·</span>
+                      <span>Help</span>
+                      <span>·</span>
+                      <span>Press</span>
+                      <span>·</span>
+                      <span>API</span>
+                      <span>·</span>
+                      <span>Jobs</span>
+                      <span>·</span>
+                      <span>Privacy</span>
+                      <span>·</span>
+                      <span>Terms</span>
+                    </p>
+                    <p className="font-mono text-[9px] uppercase tracking-wider">
+                      © 2026 CHRONICLE FROM ESSAYISTS
+                    </p>
+                  </div>
+                </aside>
+              </div>
+            ) : viewMode === 'grid' ? (
+              /* VIEW MODE 2: INSTAGRAM EXPLORE 3-COLUMN GRID */
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {sortedCatalogPosts.map((post) => (
                   <ArticleCard
                     key={post.id}
@@ -457,6 +717,11 @@ function MainApp() {
                     isLiked={userLikedPostIds.includes(post.id)}
                     onToggleLike={handleToggleLike}
                     onAuthorClick={handleAuthorClick}
+                    onAddComment={handleAddComment}
+                    onOpenAiSummary={(p) => {
+                      setAiChatContextPost(p);
+                      setIsAiChatOpen(true);
+                    }}
                     onReportPost={(p) =>
                       setReportModalData({
                         isOpen: true,
@@ -466,68 +731,40 @@ function MainApp() {
                         targetAuthorHandle: p.author.username,
                       })
                     }
-                    viewMode={viewMode}
+                    viewMode="grid"
                   />
                 ))}
               </div>
-            ) : feedType === 'following' ? (
-              <div className="py-20 text-center space-y-4">
-                <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-850 text-neutral-400 flex items-center justify-center mx-auto">
-                  <UserCheck className="w-5 h-5 text-neutral-500" />
-                </div>
-                <p className="font-editorial text-2xl font-bold text-neutral-800 dark:text-neutral-200">
-                  No stories from followed authors yet
-                </p>
-                <p className="text-sm text-neutral-500 max-w-sm mx-auto">
-                  Follow authors in "For You (Explore)" or publish your own essay to populate this stream.
-                </p>
-                <button
-                  onClick={() => setFeedType('for-you')}
-                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
-                >
-                  Explore For You
-                </button>
-              </div>
             ) : (
-              <div className="py-20 text-center space-y-4">
-                <p className="font-editorial text-2xl font-bold text-neutral-800 dark:text-neutral-200">
-                  {posts.length === 0 ? 'No stories published yet' : 'No matching essays found'}
-                </p>
-                <p className="text-sm text-neutral-500 max-w-sm mx-auto">
-                  {posts.length === 0
-                    ? 'Welcome to Chronicle! Be the first to share a long-form essay with the community.'
-                    : 'Try adjusting your search query or explore another category.'}
-                </p>
-                {posts.length === 0 ? (
-                  currentUser ? (
-                    <button
-                      onClick={() => {
-                        setCurrentView('editor');
-                        setEditingPost(null);
-                      }}
-                      className="px-5 py-2.5 text-xs font-semibold rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
-                    >
-                      Write First Story
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setIsAuthModalOpen(true)}
-                      className="px-5 py-2.5 text-xs font-semibold rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
-                    >
-                      Sign In to Write
-                    </button>
-                  )
-                ) : (
-                  <button
-                    onClick={() => {
-                      setSelectedCategory('All Stories');
-                      setSearchQuery('');
+              /* VIEW MODE 3: EDITORIAL LIST */
+              <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                {sortedCatalogPosts.map((post) => (
+                  <ArticleCard
+                    key={post.id}
+                    post={post}
+                    onSelect={handleOpenPost}
+                    isBookmarked={savedPostIds.includes(post.id)}
+                    onToggleBookmark={handleToggleBookmark}
+                    isLiked={userLikedPostIds.includes(post.id)}
+                    onToggleLike={handleToggleLike}
+                    onAuthorClick={handleAuthorClick}
+                    onAddComment={handleAddComment}
+                    onOpenAiSummary={(p) => {
+                      setAiChatContextPost(p);
+                      setIsAiChatOpen(true);
                     }}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                  >
-                    Reset Filters
-                  </button>
-                )}
+                    onReportPost={(p) =>
+                      setReportModalData({
+                        isOpen: true,
+                        targetType: 'post',
+                        targetId: p.id,
+                        targetTitleOrName: p.title,
+                        targetAuthorHandle: p.author.username,
+                      })
+                    }
+                    viewMode="list"
+                  />
+                ))}
               </div>
             )}
           </div>

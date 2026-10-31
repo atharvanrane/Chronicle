@@ -15,6 +15,12 @@ import {
   Key,
   KeyRound,
   AlertOctagon,
+  Copy,
+  Check,
+  RotateCcw,
+  Sparkles,
+  Shield,
+  HelpCircle,
 } from 'lucide-react';
 import { Post, UserProfile, ReportItem } from '../types/blog';
 import { useAuth } from '../context/AuthContext';
@@ -54,6 +60,8 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({
     adminBanUser,
     adminUnbanUser,
     adminUpdateUserRole,
+    adminResetUserPassword,
+    adminGetAccountCredentialsInfo,
     reports,
     resolveReport,
     clearAllGarbageData,
@@ -61,11 +69,17 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({
 
   const [enteredAdminPassword, setEnteredAdminPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'reports' | 'posts' | 'security' | 'broadcast'>('users');
+  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'reports' | 'posts' | 'security' | 'broadcast' | 'recovery'>('users');
   const [searchQuery, setSearchQuery] = useState('');
   const [announcementInput, setAnnouncementInput] = useState(siteAnnouncement);
   const [banReasonInput, setBanReasonInput] = useState('');
   const [selectedUserForBan, setSelectedUserForBan] = useState<UserProfile | null>(null);
+
+  // Recovery modal state
+  const [selectedUserForRecovery, setSelectedUserForRecovery] = useState<UserProfile | null>(null);
+  const [recoveryNewPassword, setRecoveryNewPassword] = useState('');
+  const [recoveryFeedback, setRecoveryFeedback] = useState<{ type: 'success' | 'error'; message: string; tempPass?: string } | null>(null);
+  const [copiedCredentials, setCopiedCredentials] = useState(false);
 
   // New password inputs
   const [newMasterPassword, setNewMasterPassword] = useState('');
@@ -117,9 +131,6 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({
               onChange={(e) => setEnteredAdminPassword(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono text-center text-sm"
             />
-            <p className="text-[10px] text-neutral-400 font-mono text-center pt-1">
-              Default master passkey: <code>admin2026!</code>
-            </p>
           </div>
 
           <button
@@ -238,6 +249,16 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({
           >
             <Key className="w-3.5 h-3.5 text-amber-400" />
             <span>Admin Password</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAdminTab('recovery')}
+            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+              activeAdminTab === 'recovery' ? 'bg-white text-neutral-900 font-semibold shadow-xs' : 'text-neutral-300 hover:text-white'
+            }`}
+          >
+            <KeyRound className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Account Recovery</span>
           </button>
 
           <button
@@ -372,6 +393,19 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({
 
                           <td className="py-4 px-6 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedUserForRecovery(user);
+                                  setRecoveryNewPassword('');
+                                  setRecoveryFeedback(null);
+                                }}
+                                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-neutral-700 dark:text-neutral-300 hover:text-amber-700 dark:hover:text-amber-300 transition-colors flex items-center gap-1"
+                                title="Account Recovery & Reset Password"
+                              >
+                                <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                                <span>Reset Pass</span>
+                              </button>
+
                               {isBanned ? (
                                 <button
                                   onClick={() => adminUnbanUser(user.id)}
@@ -739,6 +773,299 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({
             >
               Status: {isAnnouncementActive ? '● Live on Site' : '○ Disabled'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: ACCOUNT RECOVERY & CREDENTIALS CONSOLE */}
+      {activeAdminTab === 'recovery' && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-3xl bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-indigo-500" />
+                <h2 className="font-editorial text-xl font-bold text-neutral-900 dark:text-neutral-100">
+                  Account Recovery & Password Retrieval
+                </h2>
+              </div>
+              <p className="text-xs text-neutral-500 pt-1 max-w-2xl leading-relaxed">
+                If a user forgets their password and cannot receive or reset via automated email, administrators can immediately reset their password, generate a temporary login passkey, or unlock suspended accounts.
+              </p>
+            </div>
+
+            <div className="relative w-full md:w-72">
+              <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search by name, handle, or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+              />
+            </div>
+          </div>
+
+          {/* User Recovery Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => {
+                const credInfo = adminGetAccountCredentialsInfo(user.id);
+                return (
+                  <div
+                    key={user.id}
+                    className="p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xs space-y-4 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={user.photoURL}
+                          alt={user.displayName}
+                          className="w-10 h-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                        />
+                        <div>
+                          <h4 className="font-semibold text-neutral-900 dark:text-neutral-100 text-xs">
+                            {user.displayName}
+                          </h4>
+                          <span className="font-mono text-[11px] text-neutral-400 block">
+                            @{user.username}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full uppercase font-bold ${
+                          user.role === 'admin'
+                            ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
+                            : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        {user.role}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-[11px] pt-1 border-t border-neutral-100 dark:border-neutral-850">
+                      <div className="flex items-center justify-between text-neutral-500">
+                        <span>Account Email:</span>
+                        <span className="font-mono text-neutral-800 dark:text-neutral-200 truncate max-w-[160px]">
+                          {user.email}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-neutral-500">
+                        <span>Account Status:</span>
+                        {credInfo.isBanned ? (
+                          <span className="text-rose-600 font-semibold font-mono">Suspended / Banned</span>
+                        ) : (
+                          <span className="text-emerald-600 font-semibold font-mono">Active & Good Standing</span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between text-neutral-500">
+                        <span>Password Protection:</span>
+                        <span className="text-neutral-700 dark:text-neutral-300 font-mono">
+                          {credInfo.hasStoredPassword ? '✓ Protected' : 'Default / OAuth'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedUserForRecovery(user);
+                          setRecoveryNewPassword('');
+                          setRecoveryFeedback(null);
+                        }}
+                        className="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                      >
+                        <KeyRound className="w-3.5 h-3.5" />
+                        <span>Recover & Reset Password</span>
+                      </button>
+
+                      {credInfo.isBanned && (
+                        <button
+                          onClick={() => adminUnbanUser(user.id)}
+                          className="py-2 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 text-xs font-semibold"
+                        >
+                          Unlock
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="col-span-3 py-12 text-center text-xs text-neutral-400">
+                No accounts found matching your search.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ACCOUNT RECOVERY MODAL DIALOG */}
+      {selectedUserForRecovery && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-lg bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-5 shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-editorial text-lg font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+                    Admin Account Recovery
+                  </h3>
+                  <p className="text-[11px] font-mono text-neutral-400">
+                    Direct password reset for @{selectedUserForRecovery.username}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectedUserForRecovery(null);
+                  setRecoveryFeedback(null);
+                }}
+                className="p-1 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+              >
+                <Trash2 className="w-4 h-4 hidden" />
+                <span className="text-lg font-bold">×</span>
+              </button>
+            </div>
+
+            {/* Target Account Summary */}
+            <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 flex items-center gap-3">
+              <img
+                src={selectedUserForRecovery.photoURL}
+                alt={selectedUserForRecovery.displayName}
+                className="w-11 h-11 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+              />
+              <div className="flex-1 min-w-0 text-xs">
+                <h4 className="font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                  {selectedUserForRecovery.displayName}
+                </h4>
+                <p className="text-neutral-500 font-mono text-[11px] truncate">
+                  Email: {selectedUserForRecovery.email}
+                </p>
+                <div className="flex items-center gap-2 pt-0.5 font-mono text-[10px]">
+                  <span className="text-neutral-400">ID: {selectedUserForRecovery.id}</span>
+                  <span className="text-neutral-400">·</span>
+                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold uppercase">
+                    Role: {selectedUserForRecovery.role}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Feedback Message */}
+            {recoveryFeedback && (
+              <div
+                className={`p-3.5 rounded-2xl text-xs space-y-2 ${
+                  recoveryFeedback.type === 'success'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800'
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-800'
+                }`}
+              >
+                <div className="flex items-center gap-2 font-semibold">
+                  {recoveryFeedback.type === 'success' ? (
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  )}
+                  <span>{recoveryFeedback.message}</span>
+                </div>
+
+                {recoveryFeedback.tempPass && (
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-900 border border-emerald-300 dark:border-emerald-700 flex items-center justify-between gap-2 font-mono text-xs">
+                    <div>
+                      <span className="text-[10px] text-neutral-400 block font-sans">New Login Password:</span>
+                      <strong className="text-emerald-600 dark:text-emerald-400">{recoveryFeedback.tempPass}</strong>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const copyText = `Chronicle Credentials\nEmail: ${selectedUserForRecovery.email}\nNew Password: ${recoveryFeedback.tempPass}`;
+                        navigator.clipboard?.writeText(copyText);
+                        setCopiedCredentials(true);
+                        setTimeout(() => setCopiedCredentials(false), 2000);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-sans text-[11px] font-semibold hover:bg-emerald-700 flex items-center gap-1"
+                    >
+                      {copiedCredentials ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedCredentials ? 'Copied!' : 'Copy Credentials'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Password Input & Generator */}
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-neutral-700 dark:text-neutral-300">
+                  Assign New Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const randomPass = `Chronicle${Math.floor(1000 + Math.random() * 9000)}!`;
+                    setRecoveryNewPassword(randomPass);
+                  }}
+                  className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Generate Temporary Password</span>
+                </button>
+              </div>
+
+              <input
+                type="text"
+                value={recoveryNewPassword}
+                onChange={(e) => setRecoveryNewPassword(e.target.value)}
+                placeholder="e.g. Chronicle2026!"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono text-xs"
+              />
+              <p className="text-[11px] text-neutral-400">
+                Minimum 6 characters. Saving this will instantly update the user's password so they can log in immediately.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+              <button
+                onClick={() => {
+                  setSelectedUserForRecovery(null);
+                  setRecoveryFeedback(null);
+                }}
+                className="px-4 py-2 text-xs font-semibold rounded-xl text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                Close
+              </button>
+
+              <button
+                onClick={() => {
+                  try {
+                    if (!recoveryNewPassword.trim()) {
+                      setRecoveryFeedback({ type: 'error', message: 'Please enter or generate a new password first.' });
+                      return;
+                    }
+                    const res = adminResetUserPassword(selectedUserForRecovery.id, recoveryNewPassword);
+                    setRecoveryFeedback({
+                      type: 'success',
+                      message: res.message,
+                      tempPass: res.tempPass,
+                    });
+                  } catch (err: any) {
+                    setRecoveryFeedback({
+                      type: 'error',
+                      message: err.message || 'Failed to reset user password.',
+                    });
+                  }
+                }}
+                className="px-5 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1.5"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Save & Reset Password</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

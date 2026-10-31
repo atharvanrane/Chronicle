@@ -1,4 +1,7 @@
 import { Post } from '../types/blog';
 
-// Empty clean dataset - no fake/garbage posts
+/**
+ * Clean initial catalog: starts empty so user and admin have zero garbage data.
+ * Real posts are created and persisted by authenticated creators.
+ */
 export const INITIAL_POSTS: Post[] = [];

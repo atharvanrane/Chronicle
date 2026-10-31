@@ -77,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : ''
             }`}
           >
-            Stories
+            Blogs
           </button>
 
           {isCreator && (
@@ -162,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold tracking-wide text-white dark:text-neutral-900 bg-neutral-900 dark:bg-white rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-all shadow-sm active:scale-95 whitespace-nowrap"
             >
               <PenSquare className="w-3.5 h-3.5" />
-              <span>Write Story</span>
+              <span>Write Blog</span>
             </button>
           )}
 
@@ -270,7 +270,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-900 text-left"
             >
               <Compass className="w-4 h-4 text-neutral-500" />
-              <span>Explore Stories</span>
+              <span>Explore Blogs</span>
             </button>
 
             {isCreator && (
@@ -360,7 +360,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white dark:text-neutral-900 bg-neutral-900 dark:bg-white rounded-lg hover:bg-neutral-800 transition-colors"
               >
                 <PenSquare className="w-4 h-4" />
-                <span>Write New Story</span>
+                <span>Write New Blog</span>
               </button>
             )}
           </div>

@@ -268,7 +268,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
               <ArrowLeft className="w-4 h-4" />
             </button>
             <span className="font-editorial text-lg font-bold text-neutral-900 dark:text-neutral-100 hidden sm:inline">
-              {initialPost ? 'Edit Post' : 'New Story'}
+              {initialPost ? 'Edit Blog Post' : 'New Blog'}
             </span>
             <div className="flex items-center gap-1.5 text-xs text-neutral-400 font-mono">
               <span>Autosaved at</span>
@@ -427,7 +427,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
             <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-4">
               <input
                 type="text"
-                placeholder="Story Title (e.g. The Architecture of Calm Interfaces)"
+                placeholder="Blog Title (e.g. The Architecture of Calm Interfaces)"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full font-editorial text-2xl sm:text-4xl font-bold bg-transparent text-neutral-900 dark:text-neutral-50 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none tracking-tight"
@@ -435,7 +435,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
 
               <input
                 type="text"
-                placeholder="Story Subtitle / Hook (e.g. Why the quietest tools carry the greatest enduring power)"
+                placeholder="Blog Subtitle / Hook (e.g. Why the quietest tools carry the greatest enduring power)"
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
                 className="w-full text-base sm:text-lg bg-transparent text-neutral-600 dark:text-neutral-300 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
@@ -571,7 +571,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                     rows={20}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Write your story here in markdown... You can use headings (##), quotes (>), lists, and code blocks."
+                    placeholder="Write your blog post here in markdown... You can use headings (##), quotes (>), lists, and code blocks."
                     className="w-full flex-1 bg-transparent text-neutral-800 dark:text-neutral-200 font-mono text-sm leading-relaxed focus:outline-none resize-y min-h-[420px]"
                   />
                 </div>
@@ -593,7 +593,7 @@ export const PostEditor: React.FC<PostEditorProps> = ({
                     </div>
 
                     <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-                      {title || 'Story Title Preview'}
+                      {title || 'Blog Title Preview'}
                     </h1>
 
                     {subtitle && (
