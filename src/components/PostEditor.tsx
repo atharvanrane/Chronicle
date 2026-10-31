@@ -48,7 +48,9 @@ export const PostEditor: React.FC<PostEditorProps> = ({
   const [coverPattern, setCoverPattern] = useState<'geometric' | 'mesh' | 'dots' | 'waves'>(
     initialPost?.coverStyle?.pattern || 'geometric'
   );
-  const [status, setStatus] = useState<'published' | 'draft' | 'scheduled'>(initialPost?.status || 'published');
+  const [status, setStatus] = useState<'published' | 'draft' | 'scheduled'>(
+    initialPost?.status === 'archived' ? 'draft' : (initialPost?.status || 'published')
+  );
   const [authorName, setAuthorName] = useState(initialPost?.author?.name || 'Alexander Wright');
   const [authorRole, setAuthorRole] = useState(initialPost?.author?.role || 'Senior Essayist & Editor');
 

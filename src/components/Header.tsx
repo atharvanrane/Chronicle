@@ -13,6 +13,7 @@ import {
   User,
   LogOut,
   ChevronDown,
+  Heart,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,6 +24,8 @@ interface HeaderProps {
   onOpenAiChat: () => void;
   onOpenAuth: () => void;
   onOpenProfile: () => void;
+  onOpenNotifications: () => void;
+  unreadNotificationsCount: number;
   readingListCount: number;
   darkMode: boolean;
   onToggleDarkMode: () => void;
@@ -35,6 +38,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAiChat,
   onOpenAuth,
   onOpenProfile,
+  onOpenNotifications,
+  unreadNotificationsCount,
   readingListCount,
   darkMode,
   onToggleDarkMode,
@@ -133,6 +138,20 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-neutral-600" />}
           </button>
+
+          {/* Instagram Activity / Notification Heart Button */}
+          {currentUser && (
+            <button
+              onClick={onOpenNotifications}
+              className="relative p-2 text-neutral-600 dark:text-neutral-300 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none"
+              title="Activity & Follow Requests"
+            >
+              <Heart className="w-4 h-4" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500" />
+              )}
+            </button>
+          )}
 
           {isCreator && (
             <button

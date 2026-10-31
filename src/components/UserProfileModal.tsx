@@ -90,7 +90,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 {/* Follow / Edit Button */}
                 {!isOwnProfile ? (
                   <button
-                    onClick={() => toggleFollow(user.username)}
+                    onClick={() => toggleFollow(user)}
                     className={`px-5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 self-center sm:self-auto ${
                       isFollowing
                         ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700'

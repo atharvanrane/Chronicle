@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, Mail, Lock, User, Sparkles, Check, ArrowRight } from 'lucide-react';
+import { X, Lock, Key, ShieldCheck, Mail, User, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface AuthModalProps {
@@ -13,13 +13,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   defaultMode = 'login',
 }) => {
-  const { loginWithGoogle, loginWithEmail, signupWithEmail, switchDemoAccount, isLoading } = useAuth();
+  const { loginWithGoogle, loginWithEmail, signupWithEmail, isLoading } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [role, setRole] = useState<'admin' | 'creator' | 'reader'>('creator');
+  const [adminSecurityKey, setAdminSecurityKey] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -31,7 +34,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (mode === 'login') {
         await loginWithEmail(email, password);
       } else {
-        await signupWithEmail(email, password, displayName, username, role);
+        await signupWithEmail(email, password, displayName, username, role, adminSecurityKey, isPrivate);
       }
       onClose();
     } catch (err: any) {
@@ -49,23 +52,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleDemoSelect = (selectedRole: 'admin' | 'creator' | 'reader') => {
-    switchDemoAccount(selectedRole);
-    onClose();
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-2xl overflow-hidden">
         {/* Top Header */}
-        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/60 dark:bg-neutral-850/50">
+        <div className="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/60 dark:bg-neutral-850/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 flex items-center justify-center font-editorial font-bold text-sm">
+            <div className="w-8 h-8 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 flex items-center justify-center font-editorial font-bold text-base shadow-xs">
               C
             </div>
-            <h3 className="font-editorial text-lg font-bold text-neutral-900 dark:text-neutral-100">
-              {mode === 'login' ? 'Sign in to Chronicle' : 'Create Member Account'}
-            </h3>
+            <div>
+              <h3 className="font-editorial text-lg font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
+                {mode === 'login' ? 'Welcome Back' : 'Create Your Account'}
+              </h3>
+              <p className="text-[11px] font-mono text-neutral-400">
+                {mode === 'login' ? 'Sign in to your blog community' : 'Join the Instagram of Blogs'}
+              </p>
+            </div>
           </div>
 
           <button
@@ -77,34 +80,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-6">
-          {/* Quick Demo Switcher Strip */}
-          <div className="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-mono text-amber-900 dark:text-amber-300">
-              <span className="font-semibold">⚡ Quick Demo Test Accounts:</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <button
-                onClick={() => handleDemoSelect('admin')}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 font-medium hover:bg-amber-100/50 transition-colors text-center"
-              >
-                👑 Admin
-              </button>
-              <button
-                onClick={() => handleDemoSelect('creator')}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 font-medium hover:bg-neutral-100 transition-colors text-center"
-              >
-                ✍️ Creator
-              </button>
-              <button
-                onClick={() => handleDemoSelect('reader')}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 font-medium hover:bg-neutral-100 transition-colors text-center"
-              >
-                📖 Reader
-              </button>
-            </div>
-          </div>
-
+        <div className="p-6 space-y-5">
           {/* Google Sign In */}
           <button
             onClick={handleGoogle}
@@ -134,38 +110,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           <div className="relative flex items-center justify-center">
             <div className="w-full border-t border-neutral-200 dark:border-neutral-800" />
-            <span className="absolute px-3 bg-white dark:bg-neutral-900 text-[11px] font-mono text-neutral-400">
-              OR EMAIL
+            <span className="absolute px-3 bg-white dark:bg-neutral-900 text-[10px] font-mono text-neutral-400">
+              OR WITH EMAIL
             </span>
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs">
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs leading-relaxed">
               {errorMsg}
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
             {mode === 'signup' && (
               <>
                 <div className="space-y-1">
                   <label className="font-semibold text-neutral-700 dark:text-neutral-300">
-                    Full Name
+                    Your Full Name
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Atharva Rane"
+                    placeholder="e.g. John Doe"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="font-semibold text-neutral-700 dark:text-neutral-300">
-                    Username
+                    Instagram Handle / Username
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 font-mono">
@@ -177,7 +152,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       placeholder="username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      className="w-full pl-7 pr-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono"
+                      className="w-full pl-7 pr-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono"
                     />
                   </div>
                 </div>
@@ -189,12 +164,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-medium"
                   >
-                    <option value="creator">✍️ Creator (Write & Publish)</option>
-                    <option value="reader">📖 Reader (Discuss & Like)</option>
-                    <option value="admin">👑 Administrator (Full Site Moderation)</option>
+                    <option value="creator">✍️ Blog Author / Creator</option>
+                    <option value="reader">📖 Reader & Commenter</option>
+                    <option value="admin">🔒 Administrator (Password Required)</option>
                   </select>
+                </div>
+
+                {/* If user tries to create an Admin account, password is required */}
+                {role === 'admin' && (
+                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 space-y-1.5 animate-in fade-in">
+                    <div className="flex items-center gap-1.5 font-semibold text-amber-900 dark:text-amber-200 text-xs">
+                      <Key className="w-3.5 h-3.5" />
+                      <span>Admin Master Password / Passkey Required</span>
+                    </div>
+                    <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                      To prevent unauthorized administrative access, enter the administrator passkey (default is <code>admin2026!</code>).
+                    </p>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Enter Admin Master Password"
+                      value={adminSecurityKey}
+                      onChange={(e) => setAdminSecurityKey(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-neutral-900 font-mono text-xs"
+                    />
+                  </div>
+                )}
+
+                {/* Instagram Privacy: Private Blog vs Public Blog */}
+                <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-850 space-y-1">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <div>
+                      <span className="font-semibold text-neutral-800 dark:text-neutral-200">
+                        Private Blog Account
+                      </span>
+                      <p className="text-[11px] text-neutral-500">
+                        When enabled, people must send a <strong>Follow Request</strong> which you must approve before they can read your essays.
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={isPrivate}
+                      onChange={(e) => setIsPrivate(e.target.checked)}
+                      className="w-4 h-4 rounded text-neutral-900 focus:ring-neutral-500"
+                    />
+                  </label>
                 </div>
               </>
             )}
@@ -206,10 +222,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <input
                 type="email"
                 required
-                placeholder="author@chronicle.com"
+                placeholder="name@domain.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
               />
             </div>
 
@@ -217,14 +233,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <label className="font-semibold text-neutral-700 dark:text-neutral-300">
                 Password
               </label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                >
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
             </div>
 
             <button

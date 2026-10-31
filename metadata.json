@@ -1,6 +1,6 @@
 {
   "name": "Chronicle — Modern Editorial Publishing & AI Studio",
-  "description": "An aesthetic, full-featured publishing platform with AI writing copilot, real-time SEO intelligence, reader interactive Q&A assistant, and one-click Vercel deployment guide.",
+  "description": "An aesthetic, social publishing platform combining long-form editorial essays with Instagram-style engagement, follow requests, story highlights, double-tap hearts, and secure admin moderation controls.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

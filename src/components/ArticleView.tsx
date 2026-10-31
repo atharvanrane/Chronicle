@@ -12,6 +12,7 @@ import {
   Calendar,
   Clock,
   ExternalLink,
+  Flag,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Post, CommentItem } from '../types/blog';
@@ -25,6 +26,7 @@ interface ArticleViewProps {
   onUpdateClaps: (postId: string, newClaps: number) => void;
   onAddComment: (postId: string, comment: CommentItem) => void;
   onOpenAiAssistantWithContext: (post: Post) => void;
+  onReportPost?: (post: Post) => void;
   allPosts: Post[];
   onSelectPost: (post: Post) => void;
 }
@@ -37,6 +39,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
   onUpdateClaps,
   onAddComment,
   onOpenAiAssistantWithContext,
+  onReportPost,
   allPosts,
   onSelectPost,
 }) => {
@@ -303,6 +306,17 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
               {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
               {copiedLink && <span className="text-[10px] text-emerald-600 font-mono">Copied</span>}
             </button>
+
+            {/* Report */}
+            {onReportPost && (
+              <button
+                onClick={() => onReportPost(post)}
+                className="p-1.5 text-neutral-500 dark:text-neutral-400 hover:text-rose-600 rounded border border-neutral-200 dark:border-neutral-800 flex items-center gap-1"
+                title="Report offensive content to admins"
+              >
+                <Flag className="w-3.5 h-3.5" />
+              </button>
+            )}
 
             {/* Ask AI Reader Assistant */}
             <button

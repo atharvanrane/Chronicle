@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { UserCheck } from 'lucide-react';
 import { Post, CommentItem, StoryItem, UserProfile } from './types/blog';
 import { INITIAL_POSTS } from './data/initialPosts';
 import { INITIAL_STORIES } from './data/stories';
@@ -16,18 +17,27 @@ import { ReadingListModal } from './components/ReadingListModal';
 import { AiAssistantModal } from './components/AiAssistantModal';
 import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
+import { NotificationsModal } from './components/NotificationsModal';
+import { ReportModal } from './components/ReportModal';
 import { Footer } from './components/Footer';
 
 function MainApp() {
-  const { currentUser, isAdmin } = useAuth();
+  const {
+    currentUser,
+    isAdmin,
+    unreadNotificationsCount,
+    followedUsers,
+  } = useAuth();
 
-  // 1. Posts state (persisted to localStorage)
+  // 1. Posts state (persisted to localStorage) - purge legacy mock posts (post-1 .. post-6)
   const [posts, setPosts] = useState<Post[]>(() => {
     try {
-      const stored = localStorage.getItem('chronicle_posts_v2');
+      const stored = localStorage.getItem('chronicle_posts_v3');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          return parsed.filter((p) => !['post-1', 'post-2', 'post-3', 'post-4', 'post-5', 'post-6'].includes(p.id));
+        }
       }
     } catch (e) {
       console.warn('Failed to parse stored posts', e);
@@ -37,7 +47,7 @@ function MainApp() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('chronicle_posts_v2', JSON.stringify(posts));
+      localStorage.setItem('chronicle_posts_v3', JSON.stringify(posts));
     } catch (e) {
       console.warn('Could not store posts', e);
     }
@@ -46,18 +56,18 @@ function MainApp() {
   // 2. Stories state
   const [stories, setStories] = useState<StoryItem[]>(INITIAL_STORIES);
 
-  // 3. User likes tracking (Instagram style)
+  // 3. User likes tracking (Instagram style, starts empty)
   const [userLikedPostIds, setUserLikedPostIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('chronicle_user_likes');
-      return saved ? JSON.parse(saved) : ['post-1', 'post-3'];
+      const saved = localStorage.getItem('chronicle_user_likes_v3');
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return ['post-1', 'post-3'];
+      return [];
     }
   });
 
   useEffect(() => {
-    localStorage.setItem('chronicle_user_likes', JSON.stringify(userLikedPostIds));
+    localStorage.setItem('chronicle_user_likes_v3', JSON.stringify(userLikedPostIds));
   }, [userLikedPostIds]);
 
   // 4. Navigation & views
@@ -65,18 +75,18 @@ function MainApp() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
-  // 5. Saved reading list / bookmarks
+  // 5. Saved reading list / bookmarks (starts empty)
   const [savedPostIds, setSavedPostIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('chronicle_saved_posts');
-      return saved ? JSON.parse(saved) : ['post-1'];
+      const saved = localStorage.getItem('chronicle_saved_posts_v3');
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return ['post-1'];
+      return [];
     }
   });
 
   useEffect(() => {
-    localStorage.setItem('chronicle_saved_posts', JSON.stringify(savedPostIds));
+    localStorage.setItem('chronicle_saved_posts_v3', JSON.stringify(savedPostIds));
   }, [savedPostIds]);
 
   // 6. Dark mode state
@@ -101,13 +111,22 @@ function MainApp() {
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [aiChatContextPost, setAiChatContextPost] = useState<Post | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [profileModalUser, setProfileModalUser] = useState<UserProfile | null>(null);
+  const [reportModalData, setReportModalData] = useState<{
+    isOpen: boolean;
+    targetType: 'post' | 'user' | 'comment';
+    targetId: string;
+    targetTitleOrName: string;
+    targetAuthorHandle?: string;
+  } | null>(null);
 
   // 8. Site Announcement (Admin feature)
   const [siteAnnouncement, setSiteAnnouncement] = useState('Welcome to Chronicle! Explore long-form essays, join discussions, and write your own stories.');
   const [isAnnouncementActive, setIsAnnouncementActive] = useState(true);
 
-  // 9. Homepage Filter & Search
+  // 9. Homepage Filter, Search, & Feed Stream
+  const [feedType, setFeedType] = useState<'for-you' | 'following'>('for-you');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Stories');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'reading-time'>('newest');
@@ -329,7 +348,14 @@ function MainApp() {
       p.author.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    return isPublic && matchesCat && matchesSearch;
+    const matchesFeed =
+      feedType === 'for-you' ||
+      (feedType === 'following' &&
+        (followedUsers.includes(p.author.username || '') ||
+          followedUsers.includes(p.author.id || '') ||
+          (currentUser && (p.author.name === currentUser.displayName || p.author.username === currentUser.username))));
+
+    return isPublic && matchesCat && matchesSearch && matchesFeed;
   });
 
   const sortedCatalogPosts = [...filteredCatalogPosts].sort((a, b) => {
@@ -365,6 +391,8 @@ function MainApp() {
         }}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenProfile={() => currentUser && setProfileModalUser(currentUser)}
+        onOpenNotifications={() => setIsNotificationsOpen(true)}
+        unreadNotificationsCount={unreadNotificationsCount}
         readingListCount={savedPostIds.length}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
@@ -405,6 +433,9 @@ function MainApp() {
               onSortChange={setSortBy}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
+              feedType={feedType}
+              onFeedTypeChange={setFeedType}
+              followingCount={followedUsers.length}
             />
 
             {/* Articles Grid or List */}
@@ -426,27 +457,77 @@ function MainApp() {
                     isLiked={userLikedPostIds.includes(post.id)}
                     onToggleLike={handleToggleLike}
                     onAuthorClick={handleAuthorClick}
+                    onReportPost={(p) =>
+                      setReportModalData({
+                        isOpen: true,
+                        targetType: 'post',
+                        targetId: p.id,
+                        targetTitleOrName: p.title,
+                        targetAuthorHandle: p.author.username,
+                      })
+                    }
                     viewMode={viewMode}
                   />
                 ))}
               </div>
-            ) : (
-              <div className="py-20 text-center space-y-3">
+            ) : feedType === 'following' ? (
+              <div className="py-20 text-center space-y-4">
+                <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-850 text-neutral-400 flex items-center justify-center mx-auto">
+                  <UserCheck className="w-5 h-5 text-neutral-500" />
+                </div>
                 <p className="font-editorial text-2xl font-bold text-neutral-800 dark:text-neutral-200">
-                  No matching essays found
+                  No stories from followed authors yet
                 </p>
                 <p className="text-sm text-neutral-500 max-w-sm mx-auto">
-                  Try adjusting your search query or explore another category.
+                  Follow authors in "For You (Explore)" or publish your own essay to populate this stream.
                 </p>
                 <button
-                  onClick={() => {
-                    setSelectedCategory('All Stories');
-                    setSearchQuery('');
-                  }}
-                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                  onClick={() => setFeedType('for-you')}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
                 >
-                  Reset Filters
+                  Explore For You
                 </button>
+              </div>
+            ) : (
+              <div className="py-20 text-center space-y-4">
+                <p className="font-editorial text-2xl font-bold text-neutral-800 dark:text-neutral-200">
+                  {posts.length === 0 ? 'No stories published yet' : 'No matching essays found'}
+                </p>
+                <p className="text-sm text-neutral-500 max-w-sm mx-auto">
+                  {posts.length === 0
+                    ? 'Welcome to Chronicle! Be the first to share a long-form essay with the community.'
+                    : 'Try adjusting your search query or explore another category.'}
+                </p>
+                {posts.length === 0 ? (
+                  currentUser ? (
+                    <button
+                      onClick={() => {
+                        setCurrentView('editor');
+                        setEditingPost(null);
+                      }}
+                      className="px-5 py-2.5 text-xs font-semibold rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
+                    >
+                      Write First Story
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="px-5 py-2.5 text-xs font-semibold rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
+                    >
+                      Sign In to Write
+                    </button>
+                  )
+                ) : (
+                  <button
+                    onClick={() => {
+                      setSelectedCategory('All Stories');
+                      setSearchQuery('');
+                    }}
+                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                  >
+                    Reset Filters
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -468,6 +549,15 @@ function MainApp() {
               setAiChatContextPost(p);
               setIsAiChatOpen(true);
             }}
+            onReportPost={(p) =>
+              setReportModalData({
+                isOpen: true,
+                targetType: 'post',
+                targetId: p.id,
+                targetTitleOrName: p.title,
+                targetAuthorHandle: p.author.username,
+              })
+            }
             allPosts={posts}
             onSelectPost={handleOpenPost}
           />
@@ -574,6 +664,31 @@ function MainApp() {
           )}
           savedPosts={savedPostsList}
           onSelectPost={handleOpenPost}
+        />
+      )}
+
+      {/* Instagram Activity & Follow Requests Tray */}
+      <NotificationsModal
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        onSelectPostById={(pid) => {
+          const target = posts.find((p) => p.id === pid);
+          if (target) {
+            setIsNotificationsOpen(false);
+            handleOpenPost(target);
+          }
+        }}
+      />
+
+      {/* Community Offensive Content Report Modal */}
+      {reportModalData && (
+        <ReportModal
+          isOpen={reportModalData.isOpen}
+          onClose={() => setReportModalData(null)}
+          targetType={reportModalData.targetType}
+          targetId={reportModalData.targetId}
+          targetTitleOrName={reportModalData.targetTitleOrName}
+          targetAuthorHandle={reportModalData.targetAuthorHandle}
         />
       )}
     </div>

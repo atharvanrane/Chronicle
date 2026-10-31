@@ -9,6 +9,10 @@ export interface UserProfile {
   followersCount: number;
   followingCount: number;
   createdAt: string;
+  isPrivate?: boolean;
+  isBanned?: boolean;
+  banReason?: string;
+  strikeCount?: number;
 }
 
 export interface CommentItem {
@@ -62,18 +66,20 @@ export interface Post {
     avatar: string;
     bio: string;
     username?: string;
+    isPrivate?: boolean;
   };
   publishedAt: string;
   updatedAt: string;
-  status: 'published' | 'draft' | 'scheduled';
+  status: 'published' | 'draft' | 'scheduled' | 'archived';
   readTimeMinutes: number;
   claps: number;
   likesCount: number;
-  likedByUsers: string[]; // List of user IDs who liked
+  likedByUsers: string[];
   views: number;
   isFeatured?: boolean;
   seo?: PostSeo;
   comments: CommentItem[];
+  savedCollections?: string[];
 }
 
 export interface StoryItem {
@@ -86,6 +92,47 @@ export interface StoryItem {
   snippet: string;
   postId?: string;
   isUnread?: boolean;
+}
+
+export interface FollowRequest {
+  id: string;
+  fromUserId: string;
+  fromUserName: string;
+  fromUserHandle: string;
+  fromUserAvatar: string;
+  toUserId: string;
+  toUserHandle: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  type: 'follow_request' | 'like' | 'comment' | 'follow_accepted' | 'admin_notice';
+  title: string;
+  message: string;
+  fromUser?: {
+    name: string;
+    username: string;
+    avatar: string;
+  };
+  postId?: string;
+  read: boolean;
+  createdAt: string;
+  actionRequired?: boolean;
+  requestId?: string;
+}
+
+export interface ReportItem {
+  id: string;
+  type: 'post' | 'user' | 'comment';
+  targetId: string;
+  targetTitleOrName: string;
+  targetAuthorHandle?: string;
+  reason: string;
+  reportedBy: string;
+  createdAt: string;
+  status: 'pending' | 'resolved' | 'dismissed';
 }
 
 export interface SeoAnalysisResponse {

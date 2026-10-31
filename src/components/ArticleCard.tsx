@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bookmark, Heart, MessageSquare, Share2 } from 'lucide-react';
+import { Bookmark, Heart, MessageSquare, Share2, Flag } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Post } from '../types/blog';
 import { CoverArtwork } from './CoverArtwork';
@@ -12,6 +12,7 @@ interface ArticleCardProps {
   isLiked?: boolean;
   onToggleLike?: (post: Post, e: React.MouseEvent) => void;
   onAuthorClick?: (post: Post, e: React.MouseEvent) => void;
+  onReportPost?: (post: Post, e: React.MouseEvent) => void;
   viewMode?: 'grid' | 'list';
 }
 
@@ -23,9 +24,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   isLiked = false,
   onToggleLike,
   onAuthorClick,
+  onReportPost,
   viewMode = 'grid',
 }) => {
   const [showHeartBurst, setShowHeartBurst] = useState(false);
+  const totalLikes = post.likesCount ?? post.claps ?? 0;
 
   // Double-tap on image to like (Instagram gesture)
   const handleDoubleClick = (e: React.MouseEvent) => {
@@ -88,10 +91,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             </span>
             <span aria-hidden="true">·</span>
             <span className="tabular-nums font-mono text-rose-600 font-semibold">
-              {post.likesCount || post.claps} likes
+              {totalLikes} {totalLikes === 1 ? 'like' : 'likes'}
             </span>
             <span aria-hidden="true">·</span>
-            <span className="tabular-nums font-mono">{post.comments.length} comments</span>
+            <span className="tabular-nums font-mono">{post.comments?.length || 0} comments</span>
           </div>
         </div>
 
@@ -119,6 +122,16 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           >
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
+
+          {onReportPost && (
+            <button
+              onClick={(e) => onReportPost(post, e)}
+              className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-400 hover:text-rose-600 hover:bg-white dark:hover:bg-neutral-800 transition-colors"
+              title="Report offensive post"
+            >
+              <Flag className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </article>
     );
@@ -156,9 +169,20 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             </div>
           </div>
 
-          <span className="text-[11px] font-mono text-neutral-400">
-            {post.category}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-neutral-400">
+              {post.category}
+            </span>
+            {onReportPost && (
+              <button
+                onClick={(e) => onReportPost(post, e)}
+                className="p-1 rounded text-neutral-400 hover:text-rose-500 transition-colors"
+                title="Report offensive post"
+              >
+                <Flag className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Cover Artwork Container (Double-tap to like) */}
@@ -233,14 +257,17 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
         {/* "Liked by..." Instagram Social Proof Strip */}
         <div className="px-5 pb-2 text-xs font-mono text-neutral-800 dark:text-neutral-200">
-          <span>Liked by </span>
-          <span className="font-semibold">
-            {isLiked ? 'you' : post.author.username || 'marcus_v'}
-          </span>
-          <span> and </span>
-          <span className="font-semibold tabular-nums">
-            {(post.likesCount || post.claps) - 1} others
-          </span>
+          {totalLikes === 0 ? (
+            <span className="text-neutral-400">Be the first to like this essay</span>
+          ) : totalLikes === 1 ? (
+            <span>
+              Liked by <strong className="font-semibold">{isLiked ? 'you' : (post.likedByUsers?.[0] || post.author.username || 'a reader')}</strong>
+            </span>
+          ) : (
+            <span>
+              Liked by <strong className="font-semibold">{isLiked ? 'you' : (post.likedByUsers?.[0] || post.author.username || 'a reader')}</strong> and <strong className="font-semibold tabular-nums">{totalLikes - 1} others</strong>
+            </span>
+          )}
         </div>
 
         {/* Post Title & Caption */}
