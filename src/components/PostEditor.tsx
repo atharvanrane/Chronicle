@@ -229,6 +229,8 @@ export const PostEditor: React.FC<PostEditorProps> = ({
       status,
       readTimeMinutes,
       claps: initialPost?.claps || 0,
+      likesCount: initialPost?.likesCount || initialPost?.claps || 0,
+      likedByUsers: initialPost?.likedByUsers || [],
       views: initialPost?.views || 1,
       isFeatured: initialPost?.isFeatured || false,
       seo: seoResult

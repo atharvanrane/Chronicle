@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with role, display info, and follower counters",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique Firebase user UID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Full name or author pseudonym" },
+        "username": { "type": "string", "description": "Unique handle with @ prefix" },
+        "photoURL": { "type": "string", "description": "Avatar image URL" },
+        "role": { "type": "string", "enum": ["admin", "creator", "reader"], "description": "User permissions tier" },
+        "bio": { "type": "string", "description": "Short bio or tagline" },
+        "followersCount": { "type": "number", "description": "Count of users following this profile" },
+        "followingCount": { "type": "number", "description": "Count of accounts followed by this profile" },
+        "createdAt": { "type": "string", "description": "Account registration timestamp" }
+      },
+      "required": ["id", "email", "displayName", "role"]
+    },
+    "Post": {
+      "title": "Blog Article & Story",
+      "description": "Publishing post with rich markdown content and Instagram-style engagement counters",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique post document ID" },
+        "authorId": { "type": "string", "description": "Author UID" },
+        "authorName": { "type": "string", "description": "Author display name" },
+        "authorAvatar": { "type": "string", "description": "Author avatar photo" },
+        "title": { "type": "string", "description": "Article headline" },
+        "subtitle": { "type": "string", "description": "Article summary or hook" },
+        "content": { "type": "string", "description": "Markdown body content" },
+        "category": { "type": "string", "description": "Primary editorial category" },
+        "tags": { "type": "array", "description": "List of topic tags" },
+        "coverStyle": { "type": "object", "description": "Theme and pattern for cover artwork" },
+        "status": { "type": "string", "enum": ["published", "draft", "archived"], "description": "Post status" },
+        "likesCount": { "type": "number", "description": "Total heart likes" },
+        "viewsCount": { "type": "number", "description": "Total reader views" },
+        "isFeatured": { "type": "boolean", "description": "Whether highlighted in hero selection" },
+        "createdAt": { "type": "string", "description": "Publication timestamp" },
+        "updatedAt": { "type": "string", "description": "Last edit timestamp" }
+      },
+      "required": ["id", "authorId", "title", "content", "category", "status"]
+    },
+    "Like": {
+      "title": "Post Like",
+      "description": "Heart appreciation record connecting a user to a post",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "UID of user who liked" },
+        "postId": { "type": "string", "description": "Target post ID" },
+        "createdAt": { "type": "string", "description": "Timestamp of like action" }
+      },
+      "required": ["userId", "postId"]
+    },
+    "Follow": {
+      "title": "User Follow Relationship",
+      "description": "Follow relationship connecting follower to following user",
+      "type": "object",
+      "properties": {
+        "followerId": { "type": "string", "description": "UID of follower" },
+        "followingId": { "type": "string", "description": "UID of followed user" },
+        "createdAt": { "type": "string", "description": "Follow creation timestamp" }
+      },
+      "required": ["followerId", "followingId"]
+    },
+    "Comment": {
+      "title": "Post Discussion Comment",
+      "description": "Comment on an article",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Comment ID" },
+        "postId": { "type": "string", "description": "Target post ID" },
+        "authorId": { "type": "string", "description": "Author UID" },
+        "authorName": { "type": "string", "description": "Author name" },
+        "authorAvatar": { "type": "string", "description": "Author avatar" },
+        "content": { "type": "string", "description": "Comment body" },
+        "createdAt": { "type": "string", "description": "Comment creation timestamp" }
+      },
+      "required": ["id", "postId", "authorId", "content"]
+    },
+    "Admin": {
+      "title": "Admin Role Verification",
+      "description": "Trusted admin role registry",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Admin UID" },
+        "email": { "type": "string", "description": "Admin email" },
+        "role": { "type": "string", "description": "admin" }
+      },
+      "required": ["userId", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profiles"
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "Post" },
+      "description": "Published and draft stories"
+    },
+    "/likes/{likeId}": {
+      "schema": { "$ref": "Like" },
+      "description": "User likes on posts"
+    },
+    "/follows/{followId}": {
+      "schema": { "$ref": "Follow" },
+      "description": "Follower and following connections"
+    },
+    "/comments/{commentId}": {
+      "schema": { "$ref": "Comment" },
+      "description": "Post comments"
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "Admin" },
+      "description": "Privileged admin role registry"
+    }
+  }
+}

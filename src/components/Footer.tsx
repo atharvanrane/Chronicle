@@ -1,17 +1,20 @@
 import React from 'react';
-import { Rocket, Sparkles, BookOpen } from 'lucide-react';
+import { Sparkles, ShieldCheck, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface FooterProps {
-  onOpenDeployGuide: () => void;
   onOpenAiChat: () => void;
-  onNavigate: (view: 'home' | 'editor' | 'studio') => void;
+  onNavigate: (view: 'home' | 'editor' | 'studio' | 'admin') => void;
+  onOpenAuth: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
-  onOpenDeployGuide,
   onOpenAiChat,
   onNavigate,
+  onOpenAuth,
 }) => {
+  const { currentUser, isAdmin } = useAuth();
+
   return (
     <footer className="mt-20 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 py-12 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,17 +37,17 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Navigation Col */}
           <div className="space-y-2">
             <h4 className="font-mono text-xs uppercase tracking-wider text-neutral-400">
-              Navigation
+              Explore
             </h4>
             <ul className="space-y-1.5 text-xs text-neutral-600 dark:text-neutral-400">
               <li>
                 <button onClick={() => onNavigate('home')} className="hover:text-neutral-900 dark:hover:text-white transition-colors">
-                  All Essays & Stories
+                  All Stories & Articles
                 </button>
               </li>
               <li>
                 <button onClick={() => onNavigate('studio')} className="hover:text-neutral-900 dark:hover:text-white transition-colors">
-                  Studio & CMS Archive
+                  Author Studio
                 </button>
               </li>
               <li>
@@ -55,10 +58,43 @@ export const Footer: React.FC<FooterProps> = ({
             </ul>
           </div>
 
+          {/* Account & Administration */}
+          <div className="space-y-2">
+            <h4 className="font-mono text-xs uppercase tracking-wider text-neutral-400">
+              Community & Account
+            </h4>
+            <ul className="space-y-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+              {currentUser ? (
+                <>
+                  <li className="text-neutral-800 dark:text-neutral-200 font-mono">
+                    Logged in: @{currentUser.username}
+                  </li>
+                  {isAdmin && (
+                    <li>
+                      <button
+                        onClick={() => onNavigate('admin')}
+                        className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 hover:underline font-semibold"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Admin Moderation Console</span>
+                      </button>
+                    </li>
+                  )}
+                </>
+              ) : (
+                <li>
+                  <button onClick={onOpenAuth} className="hover:text-neutral-900 dark:hover:text-white transition-colors">
+                    Sign In / Register
+                  </button>
+                </li>
+              )}
+            </ul>
+          </div>
+
           {/* Intelligence & SEO */}
           <div className="space-y-2">
             <h4 className="font-mono text-xs uppercase tracking-wider text-neutral-400">
-              AI & Optimization
+              AI Intelligence
             </h4>
             <ul className="space-y-1.5 text-xs text-neutral-600 dark:text-neutral-400">
               <li>
@@ -68,34 +104,10 @@ export const Footer: React.FC<FooterProps> = ({
                 </button>
               </li>
               <li>
-                <span className="text-neutral-500">Google Gemini 3.8 Flash Core</span>
+                <span className="text-neutral-500">Real-time SEO Suggestions</span>
               </li>
               <li>
-                <span className="text-neutral-500">GPT-4 Compatible SEO Engine</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Free Hosting */}
-          <div className="space-y-2">
-            <h4 className="font-mono text-xs uppercase tracking-wider text-neutral-400">
-              Deployment
-            </h4>
-            <ul className="space-y-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-              <li>
-                <button
-                  onClick={onOpenDeployGuide}
-                  className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 hover:underline"
-                >
-                  <Rocket className="w-3 h-3" />
-                  <span>Free Vercel Deployment</span>
-                </button>
-              </li>
-              <li>
-                <span className="text-neutral-500">Zero Server Cost Forever</span>
-              </li>
-              <li>
-                <span className="text-neutral-500">Automatic SSL & Edge CDN</span>
+                <span className="text-neutral-500">Interactive Reader Q&A</span>
               </li>
             </ul>
           </div>
@@ -107,7 +119,7 @@ export const Footer: React.FC<FooterProps> = ({
             © {new Date().getFullYear()} Chronicle Publishing Studio. All rights reserved.
           </div>
           <div>
-            Published with human judgment and quiet engineering discipline.
+            Designed with quiet discipline and aesthetic craft.
           </div>
         </div>
       </div>

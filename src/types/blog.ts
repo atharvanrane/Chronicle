@@ -1,10 +1,25 @@
+export interface UserProfile {
+  id: string;
+  email: string;
+  displayName: string;
+  username: string;
+  photoURL: string;
+  role: 'admin' | 'creator' | 'reader';
+  bio?: string;
+  followersCount: number;
+  followingCount: number;
+  createdAt: string;
+}
+
 export interface CommentItem {
   id: string;
+  authorId?: string;
   authorName: string;
   authorAvatar: string;
   content: string;
   createdAt: string;
   likes: number;
+  likedBy?: string[];
 }
 
 export interface PostSeo {
@@ -41,20 +56,36 @@ export interface Post {
     imageUrl?: string;
   };
   author: {
+    id?: string;
     name: string;
     role: string;
     avatar: string;
     bio: string;
+    username?: string;
   };
   publishedAt: string;
   updatedAt: string;
   status: 'published' | 'draft' | 'scheduled';
   readTimeMinutes: number;
   claps: number;
+  likesCount: number;
+  likedByUsers: string[]; // List of user IDs who liked
   views: number;
   isFeatured?: boolean;
   seo?: PostSeo;
   comments: CommentItem[];
+}
+
+export interface StoryItem {
+  id: string;
+  title: string;
+  authorName: string;
+  authorAvatar: string;
+  category: string;
+  theme: 'stone' | 'slate' | 'amber' | 'emerald' | 'indigo' | 'rose';
+  snippet: string;
+  postId?: string;
+  isUnread?: boolean;
 }
 
 export interface SeoAnalysisResponse {

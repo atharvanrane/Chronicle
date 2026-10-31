@@ -13,7 +13,9 @@ export const INITIAL_POSTS: Post[] = [
       pattern: 'geometric',
     },
     author: {
+      id: 'author-elena',
       name: 'Elena Rostova',
+      username: 'elena_arch',
       role: 'Principal Systems Architect',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       bio: 'Writes about distributed systems, interface aesthetics, and the lost art of durable software engineering.',
@@ -23,6 +25,8 @@ export const INITIAL_POSTS: Post[] = [
     status: 'published',
     readTimeMinutes: 6,
     claps: 342,
+    likesCount: 342,
+    likedByUsers: ['user-demo-1', 'user-demo-2'],
     views: 4820,
     isFeatured: true,
     seo: {
@@ -75,6 +79,7 @@ Thoughtful software asks a single question before every commit: *Does this addit
     comments: [
       {
         id: 'c-1',
+        authorId: 'user-demo-1',
         authorName: 'Marcus Vance',
         authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
         content: 'The point about configuration switches being admissions of indecision is spot on. We recently removed 80% of our settings page and customer satisfaction rose immediately.',
@@ -83,6 +88,7 @@ Thoughtful software asks a single question before every commit: *Does this addit
       },
       {
         id: 'c-2',
+        authorId: 'user-demo-2',
         authorName: 'Sarah Chen',
         authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
         content: 'Deterministic latency over ornate spring transitions. Thank you for articulating this so clearly.',
@@ -103,7 +109,9 @@ Thoughtful software asks a single question before every commit: *Does this addit
       pattern: 'mesh',
     },
     author: {
+      id: 'author-julian',
       name: 'Julian Thorne',
+      username: 'julian_type',
       role: 'Editorial Typographer & UX Fellow',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
       bio: 'Investigates spatial typography, editorial layouts, and high-legibility digital typography systems.',
@@ -113,6 +121,8 @@ Thoughtful software asks a single question before every commit: *Does this addit
     status: 'published',
     readTimeMinutes: 5,
     claps: 219,
+    likesCount: 219,
+    likedByUsers: ['user-demo-1'],
     views: 3120,
     isFeatured: false,
     content: `When you open a printed book printed on archival cotton paper in 1964, it makes no demands upon your schedule. It does not ping you because two days have passed since you turned page forty-two. It does not congratulate you with floating confetti particles for completing chapter three.
@@ -135,6 +145,7 @@ Consider the difference between a mechanical wristwatch and a modern smartwatch.
     comments: [
       {
         id: 'c-3',
+        authorId: 'user-demo-3',
         authorName: 'Mira Patel',
         authorAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
         content: 'This philosophy resonates so deeply with why I still write drafts with a fountain pen before typing them into a screen.',
@@ -155,7 +166,9 @@ Consider the difference between a mechanical wristwatch and a modern smartwatch.
       pattern: 'dots',
     },
     author: {
+      id: 'author-aris',
       name: 'Dr. Aris Thorne',
+      username: 'aris_lab',
       role: 'Research Lead, Foundation Interfaces',
       avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
       bio: 'Investigates human-AI interaction modalities and latent space reasoning interfaces.',
@@ -165,6 +178,8 @@ Consider the difference between a mechanical wristwatch and a modern smartwatch.
     status: 'published',
     readTimeMinutes: 7,
     claps: 512,
+    likesCount: 512,
+    likedByUsers: ['user-demo-2'],
     views: 6410,
     isFeatured: false,
     content: `When graphical user interfaces first emerged, early operating systems attempted to replicate physical office desks down to the wood grain and wastepaper baskets. It took nearly a decade for software to transcend skeuomorphic mimicry and discover native digital forms.
@@ -178,13 +193,14 @@ Chat is a strictly sequential, linear medium. Human thought is associative, spat
 ### The Emerging Modalities
 
 1. **Ambient Synthesis**: The model observes the active workspace and silently compiles cross-references, missing citations, and counter-factual hypotheses in an unobtrusive secondary margin.
-2. **Semantic Semantic Diffing**: Rather than re-generating an entire 800-word essay to alter a tone, the interface provides continuous tonal sliders that adjust vocabulary density in real time.
+2. **Semantic Diffing**: Rather than re-generating an entire 800-word essay to alter a tone, the interface provides continuous tonal sliders that adjust vocabulary density in real time.
 3. **Structured Verification Engines**: Instead of blind generation, the model acts as a rigorous truth-checker, highlighting unsubstantiated claims with linked source material.
 
 The most transformative AI tools of the coming decade will not have a "Submit Prompt" button. They will be seamlessly woven into the canvas of creation itself.`,
     comments: [
       {
         id: 'c-4',
+        authorId: 'user-demo-4',
         authorName: 'Alex Rivera',
         authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
         content: 'Semantic diffing and continuous tonal sliders would be game-changing for technical documentation writing.',
@@ -201,11 +217,13 @@ The most transformative AI tools of the coming decade will not have a "Submit Pr
     category: 'Essays & Thinking',
     tags: ['writing', 'philosophy', 'deep-work', 'craft'],
     coverStyle: {
-      theme: 'emerald',
+      theme: 'rose',
       pattern: 'waves',
     },
     author: {
+      id: 'author-clara',
       name: 'Clara Lindqvist',
+      username: 'clara_essays',
       role: 'Essayist & Literary Critic',
       avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
       bio: 'Author of three essay collections on attention, literature, and modern solitude.',
@@ -215,6 +233,8 @@ The most transformative AI tools of the coming decade will not have a "Submit Pr
     status: 'published',
     readTimeMinutes: 4,
     claps: 184,
+    likesCount: 184,
+    likedByUsers: [],
     views: 2240,
     isFeatured: false,
     content: `When someone asks how long it took you to write an essay, the standard answer is three days or four hours. The true answer is thirty-eight years.
@@ -238,11 +258,13 @@ When we bypass that agonizing friction—when we ask an automated system to draf
     category: 'Founders & Startups',
     tags: ['bootstrapping', 'saas', 'pricing', 'startups', 'finance'],
     coverStyle: {
-      theme: 'rose',
+      theme: 'stone',
       pattern: 'geometric',
     },
     author: {
+      id: 'author-devon',
       name: 'Devon Mercer',
+      username: 'devon_builds',
       role: 'Founder, Fieldstone Lab',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
       bio: 'Building indie software tools with profitable economics and zero outside funding.',
@@ -252,6 +274,8 @@ When we bypass that agonizing friction—when we ask an automated system to draf
     status: 'published',
     readTimeMinutes: 8,
     claps: 412,
+    likesCount: 412,
+    likedByUsers: ['user-demo-1', 'user-demo-3'],
     views: 5930,
     isFeatured: false,
     content: `In 2024, our small team of two engineers made a deliberate pledge: we would never raise institutional venture capital, take on convertible notes, or optimize for paper valuation over cash flow.
